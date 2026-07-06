@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
-#include "MPTestTaskPlayerController.generated.h"
+#include "MPTestTaskPlayerControllerTemplate.generated.h"
 
 class UInputMappingContext;
 class UUserWidget;
@@ -14,7 +14,7 @@ class UUserWidget;
  *  Manages input mappings
  */
 UCLASS(abstract)
-class AMPTestTaskPlayerController : public APlayerController
+class AMPTestTaskPlayerControllerTemplate : public APlayerController
 {
 	GENERATED_BODY()
 	

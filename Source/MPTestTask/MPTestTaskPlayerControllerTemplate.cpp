@@ -1,7 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 
-#include "MPTestTaskPlayerController.h"
+#include "MPTestTaskPlayerControllerTemplate.h"
 #include "EnhancedInputSubsystems.h"
 #include "Engine/LocalPlayer.h"
 #include "InputMappingContext.h"
@@ -9,7 +9,7 @@
 #include "MPTestTask.h"
 #include "Widgets/Input/SVirtualJoystick.h"
 
-void AMPTestTaskPlayerController::BeginPlay()
+void AMPTestTaskPlayerControllerTemplate::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -33,7 +33,7 @@ void AMPTestTaskPlayerController::BeginPlay()
 	}
 }
 
-void AMPTestTaskPlayerController::SetupInputComponent()
+void AMPTestTaskPlayerControllerTemplate::SetupInputComponent()
 {
 	Super::SetupInputComponent();
 
@@ -60,7 +60,7 @@ void AMPTestTaskPlayerController::SetupInputComponent()
 	}
 }
 
-bool AMPTestTaskPlayerController::ShouldUseTouchControls() const
+bool AMPTestTaskPlayerControllerTemplate::ShouldUseTouchControls() const
 {
 	// are we on a mobile platform? Should we force touch?
 	return SVirtualJoystick::ShouldDisplayTouchInterface() || bForceTouchControls;
