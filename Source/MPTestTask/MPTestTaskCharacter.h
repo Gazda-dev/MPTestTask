@@ -7,6 +7,7 @@
 #include "Logging/LogMacros.h"
 #include "MPTestTaskCharacter.generated.h"
 
+class UHealthComponent;
 class USpringArmComponent;
 class UCameraComponent;
 class UInputAction;
@@ -30,6 +31,20 @@ class AMPTestTaskCharacter : public ACharacter
 	/** Follow camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FollowCamera;
+	
+	//TODO
+	/*
+	 *
+	 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UHealthComponent> HealthComponent;
+
+	UFUNCTION(BlueprintCallable)
+	void DebugDamageSelf(float Amount);
+	// TODO its like that because rework later!
+	/*
+	 *
+	 */
 	
 protected:
 

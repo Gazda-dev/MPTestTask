@@ -11,6 +11,21 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "MPTestTask.h"
+#include "GameFramework/DamageType.h"
+#include "Gameplay/Components/HealthComponent.h"
+#include "Kismet/GameplayStatics.h"
+
+void AMPTestTaskCharacter::DebugDamageSelf(float Amount)
+{
+	if (HasAuthority())
+	{
+		UGameplayStatics::ApplyDamage(this
+			, Amount
+			, GetController()
+			, this
+			, UDamageType::StaticClass());
+	}
+}
 
 AMPTestTaskCharacter::AMPTestTaskCharacter()
 {
@@ -48,6 +63,9 @@ AMPTestTaskCharacter::AMPTestTaskCharacter()
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
+	
+	//TODO for now like that but later imma do separated/child base char
+	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("HealthComponent"));
 }
 
 void AMPTestTaskCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
