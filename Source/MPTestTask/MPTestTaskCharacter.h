@@ -32,20 +32,6 @@ class AMPTestTaskCharacter : public ACharacter
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FollowCamera;
 	
-	//TODO
-	/*
-	 *
-	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UHealthComponent> HealthComponent;
-
-	UFUNCTION(BlueprintCallable)
-	void DebugDamageSelf(float Amount);
-	// TODO its like that because rework later!
-	/*
-	 *
-	 */
-	
 protected:
 
 	/** Jump Input Action */
