@@ -69,4 +69,5 @@ protected:
 	
 private:
 	float LastFireServerTime = -1000.f;
+	float LastFireLocalTime = -1000.f;
 };

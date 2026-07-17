@@ -135,6 +135,19 @@ void UWeaponComponent::TryFire()
 		return;
 	}
 	
+	const UWorld* World = GetWorld();
+	if (!IsValid(World))
+	{
+		return;
+	}
+	
+	const float Now = World->GetTimeSeconds();
+	if (Now - LastFireLocalTime < FireInterval)
+	{
+		return;
+	}
+	LastFireLocalTime = Now;
+	
 	FVector Start;
 	FVector End;
 	if (!ComputeAim(Start, End))
