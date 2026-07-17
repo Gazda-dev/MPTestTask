@@ -6,6 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "Net/UnrealNetwork.h"
 
+DEFINE_LOG_CATEGORY(LogHealth);
+
 UHealthComponent::UHealthComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
@@ -43,9 +45,6 @@ void UHealthComponent::OnRep_Health(float OldHealth)
 		, Delta
 		, nullptr
 		, nullptr);
-	
-	//TODO proper logs
-	UE_LOG(LogTemp, Warning, TEXT("delta %f health %f"), Delta, Health);
 }
 
 void UHealthComponent::OnRep_IsDead()
@@ -117,6 +116,10 @@ void UHealthComponent::ApplyHealthChange(float Delta, AController* InstigatedBy,
 	{
 		return;
 	}
+	
+	UE_LOG(LogHealth, Display, TEXT("Health changed %s | NewHealth: %f")
+		, GetOwner() ? *GetOwner()->GetName() : TEXT("null")
+		, Health);
 	
 	// because it not run on server automatically
 	OnRep_Health(OldHealth);

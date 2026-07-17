@@ -10,6 +10,8 @@
 class AController;
 class UDamageType;
 
+DECLARE_LOG_CATEGORY_EXTERN(LogHealth, Display, All);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FOnHealthChanged
 	, UHealthComponent*, HealthComponent
 	, float, NewHealth
