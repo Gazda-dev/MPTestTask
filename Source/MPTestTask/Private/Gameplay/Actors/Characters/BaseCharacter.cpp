@@ -10,6 +10,7 @@
 #include "GameFramework/DamageType.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Gameplay/Components/HealthComponent.h"
+#include "Gameplay/Components/InteractionComponent.h"
 #include "Gameplay/Components/WeaponComponent.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -45,6 +46,8 @@ ABaseCharacter::ABaseCharacter()
 	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("HealthComponent"));
 	
 	WeaponComponent = CreateDefaultSubobject<UWeaponComponent>(TEXT("WeaponComponent"));
+	
+	InteractionComponent = CreateDefaultSubobject<UInteractionComponent>(TEXT("InteractionComponent"));
 }
 
 void ABaseCharacter::Move(const FInputActionValue& Value)
@@ -93,6 +96,11 @@ void ABaseCharacter::Fire()
 	WeaponComponent->TryFire();
 }
 
+void ABaseCharacter::Interact()
+{
+	InteractionComponent->TryInteract();
+}
+
 void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) 
@@ -106,6 +114,8 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ABaseCharacter::Look);
 		
 		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Started, this, &ABaseCharacter::Fire);
+		
+		EnhancedInputComponent->BindAction(InteractionAction, ETriggerEvent::Started, this, &ABaseCharacter::Interact);
 	}
 }
 
