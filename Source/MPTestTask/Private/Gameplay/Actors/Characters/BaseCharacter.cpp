@@ -6,6 +6,10 @@
 #include "EnhancedInputComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Core/MPTestTaskGameMode.h"
+#include "Core/MPTestTaskPlayerState.h"
+#include "Engine/World.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/DamageType.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -13,6 +17,9 @@
 #include "Gameplay/Components/InteractionComponent.h"
 #include "Gameplay/Components/WeaponComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Sound/SoundCue.h"
+
+DEFINE_LOG_CATEGORY(LogPlayer);
 
 ABaseCharacter::ABaseCharacter()
 {
@@ -48,6 +55,22 @@ ABaseCharacter::ABaseCharacter()
 	WeaponComponent = CreateDefaultSubobject<UWeaponComponent>(TEXT("WeaponComponent"));
 	
 	InteractionComponent = CreateDefaultSubobject<UInteractionComponent>(TEXT("InteractionComponent"));
+}
+
+void ABaseCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+	
+	if (HealthComponent)
+	{
+		if (HasAuthority())
+		{
+			HealthComponent->OnDamagedServer.AddUObject(this, &ABaseCharacter::HandleDamagedServer);
+			HealthComponent->OnDeath.AddDynamic(this, &ABaseCharacter::HandleDeathServer);	
+		}
+		
+		HealthComponent->OnDeath.AddDynamic(this, &ABaseCharacter::HandleDeathCosmetic);
+	}
 }
 
 void ABaseCharacter::Move(const FInputActionValue& Value)
@@ -99,6 +122,74 @@ void ABaseCharacter::Fire()
 void ABaseCharacter::Interact()
 {
 	InteractionComponent->TryInteract();
+}
+
+void ABaseCharacter::HandleDamagedServer(float Amount, AController* InstigatedBy)
+{
+	if (!IsValid(InstigatedBy) || InstigatedBy == GetController())
+	{
+		return;
+	}
+	
+	if (AMPTestTaskPlayerState* AttackerPlayerState = InstigatedBy->GetPlayerState<AMPTestTaskPlayerState>())
+	{
+		AttackerPlayerState->AddDamageDealt(Amount);
+	}
+}
+
+void ABaseCharacter::HandleDeathServer(UHealthComponent* InHealthComponent
+	, AController* InstigatedBy
+	, AActor* DamageCauser)
+{
+	const UWorld* World = GetWorld();
+	if (!IsValid(World))
+	{
+		return;
+	}
+	
+	if (IsValid(InstigatedBy))
+	{
+		if (const AMPTestTaskPlayerState* PS = InstigatedBy->GetPlayerState<AMPTestTaskPlayerState>())
+		{
+			UE_LOG(LogPlayer, Display, TEXT("Player died %s"), *PS->GetPlayerName());
+		}
+	}
+	
+	if (AMPTestTaskGameMode* GameMode = World->GetAuthGameMode<AMPTestTaskGameMode>())
+	{
+		GameMode->NotifyPlayerDied(GetController(), InstigatedBy);
+	}
+}
+
+void ABaseCharacter::HandleDeathCosmetic(UHealthComponent* InHealthComponent, AController* InstigatedBy,
+	AActor* DamageCauser)
+{
+	//dedicated server has no local viewer -> skip
+	if (GetNetMode() == NM_DedicatedServer)
+	{
+		return;
+	}
+	
+	if (DeathSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this
+			, DeathSound
+			, GetActorLocation());
+	}
+	else
+	{
+		UE_LOG(LogPlayer, Error, TEXT("Death sound not set %s"), *GetName());
+	}
+	
+	if (USkeletalMeshComponent* MeshComp = GetMesh())
+	{
+		GetCharacterMovement()->DisableMovement();
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		
+		MeshComp->SetCollisionProfileName(TEXT("Ragdoll"));
+		MeshComp->SetSimulatePhysics(true);
+		MeshComp->WakeAllRigidBodies();
+	}
 }
 
 void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

@@ -17,6 +17,25 @@ class MPTESTTASK_API AMPTestTaskPlayerController : public APlayerController
 protected:
 	virtual void SetupInputComponent() override;
 	
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_SetReady(bool bReady);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_StartMatch();	
+	
+	UFUNCTION(Server, Reliable)
+	void Server_ReturnToLobby();
+	
+public:
+	UFUNCTION(BlueprintCallable, Category = "Match")
+	void RequestSetReady(bool bReady);
+
+	UFUNCTION(BlueprintCallable, Category = "Match")
+	void RequestStartMatch();
+
+	UFUNCTION(BlueprintCallable, Category = "Match")
+	void RequestReturnToLobby();
+	
 protected:
 	// Input mapping contexts
 	UPROPERTY(EditDefaultsOnly, Category = "MPTask|Input")
@@ -26,4 +45,11 @@ protected:
 	// TODO prolly should be per context but for now minor (or just put all IAs in one IMC)
 	UPROPERTY(EditDefaultsOnly, Category = "MPTask|Input")
 	int32 DefaultContextsPriority = 0;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "MPTask")
+	TSubclassOf<UUserWidget> HUDWidgetClass;
+	
+private:
+	UPROPERTY()
+	TObjectPtr<UUserWidget> HUDWidget;
 };

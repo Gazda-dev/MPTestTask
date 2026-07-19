@@ -7,6 +7,8 @@
 
 #include "MPTestTaskGameMode.generated.h"
 
+class AMPTestTaskPlayerState;
+
 UCLASS(abstract)
 class AMPTestTaskGameMode : public AGameModeBase
 {
@@ -14,6 +16,24 @@ class AMPTestTaskGameMode : public AGameModeBase
 
 public:
 	AMPTestTaskGameMode();
+	
+	void NotifyPlayerDied(AController* Victim, AController* Killer);
+	void RequestStartMatch();
+	void ReturnToLobby();
+	void ResetAndRespawnAllPlayers();
+	
+private:
+	void StartMatch();
+	void EndMatch(AMPTestTaskPlayerState* Winner);
+	bool AreAllPlayersReady() const;
+	int32 CountAlivePlayers(AMPTestTaskPlayerState*& OutLastAlive) const;
+	
+protected:
+	UPROPERTY(EditDefaultsOnly, Category = "Match", meta = (ClampMin = "2"))
+	int32 MinPlayersToStart = 2;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Match", meta = (ClampMin = "2"))
+	float DeathLifeSpan = 5.f;
 };
 
 

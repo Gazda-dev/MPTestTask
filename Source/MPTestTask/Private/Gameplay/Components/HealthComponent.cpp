@@ -124,10 +124,15 @@ void UHealthComponent::ApplyHealthChange(float Delta, AController* InstigatedBy,
 	// because it not run on server automatically
 	OnRep_Health(OldHealth);
 	
+	if (Delta < 0.f)
+	{
+		const float DamageDealt = OldHealth - Health;
+		OnDamagedServer.Broadcast(DamageDealt, InstigatedBy);
+	}
+	
 	if (Health <= 0.f && !bIsDead)
 	{
 		bIsDead = true;
-		OnRep_IsDead();
 		OnDeath.Broadcast(this, InstigatedBy, DamageCauser);
 	}
 }

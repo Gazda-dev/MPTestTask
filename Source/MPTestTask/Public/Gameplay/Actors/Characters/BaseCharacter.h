@@ -11,6 +11,7 @@
  *	A bit copy-paste from template character but lets not overcomplicate it
  */
 
+class USoundCue;
 class UInteractionComponent;
 class UWeaponComponent;
 class UInputAction;
@@ -19,6 +20,8 @@ class UCameraComponent;
 class USpringArmComponent;
 
 struct FInputActionValue;
+
+DECLARE_LOG_CATEGORY_EXTERN(LogPlayer, Display, All);
 
 UCLASS()
 class MPTESTTASK_API ABaseCharacter : public ACharacter
@@ -29,6 +32,8 @@ public:
 	ABaseCharacter();
 	
 protected:
+	virtual void BeginPlay() override;
+	
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	
@@ -37,6 +42,19 @@ protected:
 	
 	void Fire();
 	void Interact();
+	
+	UFUNCTION()
+	void HandleDamagedServer(float Amount, AController* InstigatedBy);
+
+	UFUNCTION()
+	void HandleDeathServer(UHealthComponent* InHealthComponent
+	, AController* InstigatedBy
+	, AActor* DamageCauser);
+	
+	UFUNCTION()
+	void HandleDeathCosmetic(UHealthComponent* InHealthComponent
+		, AController* InstigatedBy
+		, AActor* DamageCauser);
 	
 public:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
@@ -80,4 +98,7 @@ protected:
 	
 	UPROPERTY(EditAnywhere, Category = "Input")
 	TObjectPtr<UInputAction> InteractionAction;
+	
+	UPROPERTY(EditAnywhere, Category = "Death")
+	TObjectPtr<USoundCue> DeathSound;
 };

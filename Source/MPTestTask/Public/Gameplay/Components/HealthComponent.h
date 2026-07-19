@@ -24,6 +24,10 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnDeath
 	, AController*, InstigatedBy
 	, AActor*, DamageCauser);
 
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnDamagedServer
+	, float /*Amount*/
+	, AController* /*Instigator*/);
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class MPTESTTASK_API UHealthComponent : public UActorComponent
 {
@@ -83,6 +87,8 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "MP|Health")
 	FOnDeath OnDeath;
 
+	FOnDamagedServer OnDamagedServer;
+	
 private:
 	void ApplyHealthChange(float Delta, AController* InstigatedBy, AActor* DamageCauser);
 	
