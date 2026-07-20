@@ -8,19 +8,21 @@ public class MPTestTask : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		// TODO alphabetical order
 		PublicDependencyModuleNames.AddRange(new string[] {
+			"AIModule",
 			"Core",
 			"CoreUObject",
 			"Engine",
-			"InputCore",
 			"EnhancedInput",
-			"AIModule",
-			"StateTreeModule",
 			"GameplayStateTreeModule",
+			"InputCore",
 			"Niagara",
-			"UMG",
-			"Slate"
+			"OnlineSubsystem",
+			"OnlineSubsystemUtils",
+			"Slate",
+			"SlateCore",
+			"StateTreeModule",
+			"UMG"
 		});
 
 		PublicIncludePaths.AddRange(new string[] {
@@ -39,13 +41,5 @@ public class MPTestTask : ModuleRules
 			"MPTestTask/Variant_SideScrolling/Interfaces",
 			"MPTestTask/Variant_SideScrolling/UI"
 		});
-
-		// Uncomment if you are using Slate UI
-		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
-
-		// Uncomment if you are using online features
-		// PrivateDependencyModuleNames.Add("OnlineSubsystem");
-
-		// To include OnlineSubsystemSteam, add it to the plugins section in your uproject file with the Enabled attribute set to true
 	}
 }
