@@ -42,7 +42,7 @@ class MPTESTTASK_API UMPTestTaskSessionSubsystem : public UGameInstanceSubsystem
 	
 public:
 	UFUNCTION(BlueprintCallable, Category = "Session")
-	void HostSession(int32 NumPublicConnections, const FString& ServerName, const FString& MapPath);
+	void HostSession(int32 NumPublicConnections, const FString& ServerName);
 	
 	UFUNCTION(BlueprintCallable, Category = "Session")
 	void FindSessions();

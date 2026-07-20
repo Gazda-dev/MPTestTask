@@ -7,17 +7,30 @@
 #include "OnlineSubsystemUtils.h"
 #include "Engine/GameInstance.h"
 #include "GameFramework/PlayerController.h"
+#include "Settings/MPTestTaskDevSettings.h"
 
 DEFINE_LOG_CATEGORY(LogSession);
 
 void UMPTestTaskSessionSubsystem::HostSession(int32 NumPublicConnections
-	, const FString& ServerName
-	, const FString& MapPath)
+	, const FString& ServerName)
 {
 	const IOnlineSessionPtr Sessions = GetSessions();
 	if (!Sessions.IsValid())
 	{
 		UE_LOG(LogSession, Error, TEXT("HostSession: Session interface is invalid!"));
+		return;
+	}
+	
+	const UMPTestTaskDevSettings* DevSettings = GetDefault<UMPTestTaskDevSettings>();
+	if (!IsValid(DevSettings))
+	{
+		return;
+	}
+	
+	FString MapPath = DevSettings->ArenaMap.ToSoftObjectPath().GetLongPackageName();
+	if (MapPath.IsEmpty())
+	{
+		UE_LOG(LogSession, Error, TEXT("HostSession: MapPath is empty! Check project settings"));
 		return;
 	}
 	
