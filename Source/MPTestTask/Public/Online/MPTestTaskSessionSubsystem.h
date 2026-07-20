@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Engine/TimerHandle.h"
 #include "Interfaces/OnlineSessionInterface.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 
@@ -86,6 +87,8 @@ protected:
 		, ETravelFailure::Type FailureType
 		, const FString& ErrorString);
 	
+	void HandleJoinTimeout();
+	
 public:
 	UPROPERTY(BlueprintAssignable, Category = "Session")
 	FMPOnCreateSessionComplete OnMPCreateSessionComplete;
@@ -107,4 +110,6 @@ protected:
 	FDelegateHandle OnJoinSessionCompleteDelegateHandle;
 	
 	bool bIsJoining = false;
+	
+	FTimerHandle JoinTimerHandle;
 };

@@ -5,6 +5,7 @@
 #include "OnlineSessionSettings.h"
 #include "OnlineSubsystem.h"
 #include "OnlineSubsystemUtils.h"
+#include "TimerManager.h"
 #include "Engine/GameInstance.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/PlayerState.h"
@@ -139,6 +140,21 @@ void UMPTestTaskSessionSubsystem::JoinSessionByIndex(int32 SearchIndex)
 		FOnJoinSessionCompleteDelegate::CreateUObject(this, &UMPTestTaskSessionSubsystem::HandleJoinSessionComplete));
 	
 	Sessions->JoinSession(0, NAME_GameSession, LastSearch->SearchResults[SearchIndex]);
+	
+	const UMPTestTaskDevSettings* DevSettings = GetDefault<UMPTestTaskDevSettings>();
+	if (!IsValid(DevSettings))
+	{
+		return;
+	}
+	
+	if (const UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().SetTimer(JoinTimerHandle
+			, this
+			, &UMPTestTaskSessionSubsystem::HandleJoinTimeout
+			, DevSettings->JoinTimeoutSeconds
+			, false);
+	}
 }
 
 void UMPTestTaskSessionSubsystem::DestroySession()
@@ -334,6 +350,12 @@ void UMPTestTaskSessionSubsystem::HandleNetworkFailure(UWorld* World
 		, *ErrorString);	
 	
 	LeaveSession();
+	
+	if (World)
+	{
+		World->GetTimerManager().ClearTimer(JoinTimerHandle);
+		JoinTimerHandle.Invalidate();
+	}
 }
 
 void UMPTestTaskSessionSubsystem::HandleTravelFailure(UWorld* World
@@ -350,5 +372,32 @@ void UMPTestTaskSessionSubsystem::HandleTravelFailure(UWorld* World
 		Sessions->DestroySession(NAME_GameSession);
 	}
 	
+	if (World)
+	{
+		World->GetTimerManager().ClearTimer(JoinTimerHandle);
+		JoinTimerHandle.Invalidate();
+	}
+	
 	OnMPJoinSessionComplete.Broadcast(false);
+}
+
+void UMPTestTaskSessionSubsystem::HandleJoinTimeout()
+{
+	UE_LOG(LogSession, Warning, TEXT("Join timed out. Refreshing server list"));
+	
+	bIsJoining = false;
+	
+	if (GEngine)
+	{
+		GEngine->CancelPending(GetWorld());
+	}
+	
+	const IOnlineSessionPtr Sessions = GetSessions();
+	if (Sessions.IsValid() && Sessions->GetNamedSession(NAME_GameSession))
+	{
+		Sessions->DestroySession(NAME_GameSession);
+	}
+	
+	OnMPJoinSessionComplete.Broadcast(false);
+	FindSessions();
 }

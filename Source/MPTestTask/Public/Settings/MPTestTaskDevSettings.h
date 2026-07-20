@@ -21,4 +21,8 @@ public:
 	
 	UPROPERTY(Config, EditAnywhere, Category = "Maps")
 	TSoftObjectPtr<UWorld> ArenaMap;
+	
+	// after how many seconds joining to server will be aborted
+	UPROPERTY(Config, EditAnywhere, Category = "Online")
+	float JoinTimeoutSeconds = 10.f;
 };
