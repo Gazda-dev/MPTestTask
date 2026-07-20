@@ -7,12 +7,33 @@
 #include "OnlineSubsystemUtils.h"
 #include "Engine/GameInstance.h"
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/PlayerState.h"
 #include "Settings/MPTestTaskDevSettings.h"
 
 DEFINE_LOG_CATEGORY(LogSession);
 
+void UMPTestTaskSessionSubsystem::Initialize(FSubsystemCollectionBase& Collection)
+{
+	Super::Initialize(Collection);
+	
+	if (GEngine)
+	{
+		GEngine->OnNetworkFailure().AddUObject(this, &UMPTestTaskSessionSubsystem::HandleNetworkFailure);
+	}
+}
+
+void UMPTestTaskSessionSubsystem::Deinitialize()
+{
+	Super::Deinitialize();
+	
+	if (GEngine)
+	{
+		GEngine->OnNetworkFailure().RemoveAll(this);
+	}
+}
+
 void UMPTestTaskSessionSubsystem::HostSession(int32 NumPublicConnections
-	, const FString& ServerName)
+                                              , const FString& ServerName)
 {
 	const IOnlineSessionPtr Sessions = GetSessions();
 	if (!Sessions.IsValid())
@@ -117,6 +138,43 @@ void UMPTestTaskSessionSubsystem::DestroySession()
 	{
 		UE_LOG(LogSession, Display, TEXT("Destroying session"));
 		Sessions->DestroySession(NAME_GameSession);
+	}
+}
+
+void UMPTestTaskSessionSubsystem::LeaveSession()
+{
+	const IOnlineSessionPtr Sessions = GetSessions();
+	if (Sessions.IsValid() && Sessions->GetNamedSession(NAME_GameSession))
+	{
+		UE_LOG(LogSession, Display, TEXT("Leaving session"));
+		Sessions->DestroySession(NAME_GameSession);
+	}
+	
+	const UMPTestTaskDevSettings* DevSettings = GetDefault<UMPTestTaskDevSettings>();
+	if (!IsValid(DevSettings))
+	{
+		return;
+	}
+	
+	FString MenuPath = DevSettings->MainMenuMap.ToSoftObjectPath().GetLongPackageName();
+	if (MenuPath.IsEmpty())
+	{
+		UE_LOG(LogSession, Error, TEXT("LeaveSession: MainMenuMap not set! Check project settings"));
+		return;
+	}
+	
+	UGameInstance* GameInstance = GetGameInstance();
+	if (!IsValid(GameInstance))
+	{
+		return;
+	}
+	
+	if (APlayerController* PC = GameInstance->GetFirstLocalPlayerController())
+	{
+		PC->ClientTravel(MenuPath, TRAVEL_Absolute);
+		
+		UE_LOG(LogSession, Display, TEXT("%s left session")
+			, PC->PlayerState ? *PC->PlayerState->GetPlayerName() : TEXT("null"));
 	}
 }
 
@@ -255,4 +313,15 @@ void UMPTestTaskSessionSubsystem::HandleJoinSessionComplete(FName SessionName, E
 	
 	UE_LOG(LogSession, Display, TEXT("Join successful. ClientTravel -> %s"), *ConnectString);
 	PC->ClientTravel(ConnectString, TRAVEL_Absolute);
+}
+
+void UMPTestTaskSessionSubsystem::HandleNetworkFailure(UWorld* World
+	, UNetDriver* NetDriver
+	, ENetworkFailure::Type FailureType
+	, const FString& ErrorString)
+{
+	UE_LOG(LogSession, Warning, TEXT("Network failure %s. Returning to main menu")
+		, *ErrorString);	
+	
+	LeaveSession();
 }

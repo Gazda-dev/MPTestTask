@@ -8,6 +8,12 @@
 
 #include "MPTestTaskSessionSubsystem.generated.h"
 
+namespace ENetworkFailure
+{
+	enum Type : int;
+}
+
+class UNetDriver;
 DECLARE_LOG_CATEGORY_EXTERN(LogSession, Display, All);
 
 USTRUCT(BlueprintType)
@@ -41,6 +47,9 @@ class MPTESTTASK_API UMPTestTaskSessionSubsystem : public UGameInstanceSubsystem
 	GENERATED_BODY()
 	
 public:
+	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+	virtual void Deinitialize() override;
+	
 	UFUNCTION(BlueprintCallable, Category = "Session")
 	void HostSession(int32 NumPublicConnections, const FString& ServerName);
 	
@@ -53,12 +62,20 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Session")
 	void DestroySession();
 
+	UFUNCTION(BlueprintCallable, Category = "Session")
+	void LeaveSession();
+	
 protected:
 	IOnlineSessionPtr GetSessions() const;
 	
 	void HandleCreateSessionComplete(FName SessionName, bool bWasSuccessful);
 	void HandleFindSessionsComplete(bool bWasSuccessful);
 	void HandleJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
+	
+	void HandleNetworkFailure(UWorld* World
+		, UNetDriver* NetDriver
+		, ENetworkFailure::Type FailureType
+		, const FString& ErrorString);
 	
 public:
 	UPROPERTY(BlueprintAssignable, Category = "Session")
