@@ -29,7 +29,7 @@ private:
 	int32 CountAlivePlayers(AMPTestTaskPlayerState*& OutLastAlive) const;
 	
 protected:
-	UPROPERTY(EditDefaultsOnly, Category = "Match", meta = (ClampMin = "2"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Match", meta = (ClampMin = "2"))
 	int32 MinPlayersToStart = 2;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Match", meta = (ClampMin = "2"))

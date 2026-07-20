@@ -8,6 +8,11 @@
 
 #include "MPTestTaskSessionSubsystem.generated.h"
 
+namespace ETravelFailure
+{
+	enum Type : int;
+}
+
 namespace ENetworkFailure
 {
 	enum Type : int;
@@ -77,6 +82,10 @@ protected:
 		, ENetworkFailure::Type FailureType
 		, const FString& ErrorString);
 	
+	void HandleTravelFailure(UWorld* World
+		, ETravelFailure::Type FailureType
+		, const FString& ErrorString);
+	
 public:
 	UPROPERTY(BlueprintAssignable, Category = "Session")
 	FMPOnCreateSessionComplete OnMPCreateSessionComplete;
@@ -96,4 +105,6 @@ protected:
 	FDelegateHandle OnCreateSessionCompleteDelegateHandle;
 	FDelegateHandle OnFindSessionCompleteDelegateHandle;
 	FDelegateHandle OnJoinSessionCompleteDelegateHandle;
+	
+	bool bIsJoining = false;
 };

@@ -46,8 +46,6 @@ void AHealthPickup::Interact(AActor* Interactor)
 	{
 		return;
 	}
-	//TODO delete but maybe some proper logs on cvar...
-	UE_LOG(LogTemp, Warning, TEXT("healthpickup interact"));
 	
 	if (UHealthComponent* HealthComponent = Interactor->FindComponentByClass<UHealthComponent>())
 	{

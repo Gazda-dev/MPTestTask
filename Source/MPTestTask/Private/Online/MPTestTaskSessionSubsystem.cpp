@@ -19,6 +19,7 @@ void UMPTestTaskSessionSubsystem::Initialize(FSubsystemCollectionBase& Collectio
 	if (GEngine)
 	{
 		GEngine->OnNetworkFailure().AddUObject(this, &UMPTestTaskSessionSubsystem::HandleNetworkFailure);
+		GEngine->OnTravelFailure().AddUObject(this, &UMPTestTaskSessionSubsystem::HandleTravelFailure);
 	}
 }
 
@@ -29,6 +30,7 @@ void UMPTestTaskSessionSubsystem::Deinitialize()
 	if (GEngine)
 	{
 		GEngine->OnNetworkFailure().RemoveAll(this);
+		GEngine->OnTravelFailure().RemoveAll(this);
 	}
 }
 
@@ -108,6 +110,14 @@ void UMPTestTaskSessionSubsystem::FindSessions()
 
 void UMPTestTaskSessionSubsystem::JoinSessionByIndex(int32 SearchIndex)
 {
+	if (bIsJoining)
+	{
+		UE_LOG(LogSession, Warning, TEXT("Join already in progress"));
+		return;
+	}
+	
+	bIsJoining = true;
+	
 	const IOnlineSessionPtr Sessions = GetSessions();
 	if (!Sessions.IsValid() || !LastSearch.IsValid())
 	{
@@ -324,4 +334,21 @@ void UMPTestTaskSessionSubsystem::HandleNetworkFailure(UWorld* World
 		, *ErrorString);	
 	
 	LeaveSession();
+}
+
+void UMPTestTaskSessionSubsystem::HandleTravelFailure(UWorld* World
+	, ETravelFailure::Type FailureType
+	, const FString& ErrorString)
+{
+	UE_LOG(LogSession, Warning, TEXT("Travel failure %s"), *ErrorString);
+	
+	bIsJoining = false;
+	
+	const IOnlineSessionPtr Sessions = GetSessions();
+	if (Sessions.IsValid() && Sessions->GetNamedSession(NAME_GameSession))
+	{
+		Sessions->DestroySession(NAME_GameSession);
+	}
+	
+	OnMPJoinSessionComplete.Broadcast(false);
 }
