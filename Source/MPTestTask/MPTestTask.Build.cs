@@ -12,6 +12,7 @@ public class MPTestTask : ModuleRules
 			"AIModule",
 			"Core",
 			"CoreUObject",
+			"DeveloperSettings",
 			"Engine",
 			"EnhancedInput",
 			"GameplayStateTreeModule",
