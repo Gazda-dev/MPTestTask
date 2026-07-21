@@ -109,6 +109,12 @@ void AMPTestTaskGameMode::ResetAndRespawnAllPlayers()
 			continue;
 		}
 		
+		if (APawn* OldPawn = Controller->GetPawn())
+		{
+			Controller->UnPossess();
+			OldPawn->Destroy();
+		}
+		
 		if (AMPTestTaskPlayerState* PlayerState = Controller->GetPlayerState<AMPTestTaskPlayerState>())
 		{
 			PlayerState->ResetForNewRound();
