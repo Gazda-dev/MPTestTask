@@ -113,6 +113,16 @@ void UInteractionComponent::DetectFocus()
 	
 	if (NewFocusActor != FocusedActor)
 	{
+		if (IInteractableInterface* Old = Cast<IInteractableInterface>(FocusedActor))
+		{
+			Old->SetInteractionPromptVisible(false);
+		}
+		
+		if (IInteractableInterface* New = Cast<IInteractableInterface>(NewFocusActor))
+		{
+			New->SetInteractionPromptVisible(true);
+		}
+		
 		FocusedActor = NewFocusActor;
 		OnFocusChanged.Broadcast(FocusedActor);
 	}

@@ -8,8 +8,10 @@
 
 #include "HealthPickup.generated.h"
 
+class UWidgetComponent;
 class USphereComponent;
 
+// it should be pickableBase -> healthPickup but for test task its only one class so...
 UCLASS()
 class MPTESTTASK_API AHealthPickup : public AActor, public IInteractableInterface
 {
@@ -18,10 +20,13 @@ class MPTESTTASK_API AHealthPickup : public AActor, public IInteractableInterfac
 public:
 	AHealthPickup();
 
+	virtual void BeginPlay() override;
+	
 	/** IInteractableInterface Interface */
 	virtual bool CanInteract(AActor* Interactor) const override;
 	virtual void Interact(AActor* Interactor) override;
 	virtual FText GetInteractionPrompt() const override;
+	virtual void SetInteractionPromptVisible(bool bVisible) override;
 	/** End IInteractableInterface Interface */
 	
 protected:
@@ -33,6 +38,9 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "HealthPickup")
 	TObjectPtr<UStaticMeshComponent> MeshComponent;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "HealthPickup")
+	TObjectPtr<UWidgetComponent> InteractionPromptWidget;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "HealthPickup")
 	float HealAmount = 20.f;

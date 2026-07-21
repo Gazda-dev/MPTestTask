@@ -4,8 +4,10 @@
 
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/WidgetComponent.h"
 #include "Engine/Scene.h"
 #include "Gameplay/Components/HealthComponent.h"
+#include "UI/InteractionPromptWidget.h"
 
 AHealthPickup::AHealthPickup()
 {
@@ -23,6 +25,23 @@ AHealthPickup::AHealthPickup()
 	
 	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComponent"));
 	MeshComponent->SetupAttachment(RootComponent);
+	
+	InteractionPromptWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("InteractionPromptWidget"));
+	InteractionPromptWidget->SetupAttachment(RootSceneComponent);
+	InteractionPromptWidget->SetWidgetSpace(EWidgetSpace::Screen);
+	InteractionPromptWidget->SetDrawSize(FVector2D(200.f, 40.f));
+	InteractionPromptWidget->SetVisibility(false);
+}
+
+void AHealthPickup::BeginPlay()
+{
+	Super::BeginPlay();
+	
+	if (UInteractionPromptWidget* PromptWidget 
+		= Cast<UInteractionPromptWidget>(InteractionPromptWidget->GetUserWidgetObject()))
+	{
+		PromptWidget->SetLabel(InteractionPrompt);
+	}
 }
 
 bool AHealthPickup::CanInteract(AActor* Interactor) const
@@ -61,3 +80,11 @@ FText AHealthPickup::GetInteractionPrompt() const
 	return InteractionPrompt;
 }
 
+
+void AHealthPickup::SetInteractionPromptVisible(bool bVisible)
+{
+	if (InteractionPromptWidget)
+	{
+		InteractionPromptWidget->SetVisibility(bVisible);
+	}
+}

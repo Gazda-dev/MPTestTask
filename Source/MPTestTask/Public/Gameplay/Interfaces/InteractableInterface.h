@@ -29,4 +29,6 @@ public:
 	{
 		return FText::GetEmpty();
 	}
+	
+	virtual void SetInteractionPromptVisible(bool bVisible) {}
 };
