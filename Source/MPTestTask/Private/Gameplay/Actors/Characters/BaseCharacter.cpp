@@ -55,6 +55,9 @@ ABaseCharacter::ABaseCharacter()
 	WeaponComponent = CreateDefaultSubobject<UWeaponComponent>(TEXT("WeaponComponent"));
 	
 	InteractionComponent = CreateDefaultSubobject<UInteractionComponent>(TEXT("InteractionComponent"));
+	
+	SetNetUpdateFrequency(30.f);
+	SetMinNetUpdateFrequency(20.f);
 }
 
 void ABaseCharacter::BeginPlay()
