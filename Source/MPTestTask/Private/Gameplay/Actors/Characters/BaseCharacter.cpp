@@ -58,6 +58,9 @@ ABaseCharacter::ABaseCharacter()
 	
 	SetNetUpdateFrequency(30.f);
 	SetMinNetUpdateFrequency(20.f);
+	
+	GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
+	GetMesh()->bEnableUpdateRateOptimizations = true;
 }
 
 void ABaseCharacter::BeginPlay()
