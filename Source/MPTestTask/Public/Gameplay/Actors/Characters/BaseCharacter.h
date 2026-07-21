@@ -7,10 +7,7 @@
 
 #include "BaseCharacter.generated.h"
 
-/*
- *	A bit copy-paste from template character but lets not overcomplicate it
- */
-
+class UWidgetComponent;
 class USoundCue;
 class UInteractionComponent;
 class UWeaponComponent;
@@ -31,9 +28,11 @@ class MPTESTTASK_API ABaseCharacter : public ACharacter
 public:
 	ABaseCharacter();
 	
-protected:
 	virtual void BeginPlay() override;
-	
+	virtual void NotifyControllerChanged() override;
+	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
+
+protected:
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	
@@ -56,8 +55,12 @@ protected:
 		, AController* InstigatedBy
 		, AActor* DamageCauser);
 	
-public:
-	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
+	UFUNCTION()
+	void HandleHealthChanged(UHealthComponent* InHealthComponent
+	, float NewHealth
+	, float Delta
+	, AController* InstigatedBy
+	, AActor* DamageCauser);
 	
 protected:
 	//TODO uprop comments
@@ -76,6 +79,9 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UInteractionComponent> InteractionComponent;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<UWidgetComponent> HealthBarWidget;
 	
 	/** Jump Input Action */
 	UPROPERTY(EditAnywhere, Category = "Input")

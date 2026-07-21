@@ -7,6 +7,7 @@
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/WidgetComponent.h"
 #include "Core/MPTestTaskGameMode.h"
 #include "Core/MPTestTaskPlayerState.h"
 #include "Engine/World.h"
@@ -18,6 +19,7 @@
 #include "Gameplay/Components/WeaponComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
+#include "UI/HealthBarWidget.h"
 
 DEFINE_LOG_CATEGORY(LogPlayer);
 
@@ -56,6 +58,12 @@ ABaseCharacter::ABaseCharacter()
 	
 	InteractionComponent = CreateDefaultSubobject<UInteractionComponent>(TEXT("InteractionComponent"));
 	
+	HealthBarWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthBarWidget"));
+	HealthBarWidget->SetupAttachment(GetMesh());
+	HealthBarWidget->SetRelativeLocation(FVector(0.0, 0.0, 120.0));
+	HealthBarWidget->SetWidgetSpace(EWidgetSpace::Screen);
+	HealthBarWidget->SetDrawSize(FVector2D(130.0, 20.0));
+	
 	SetNetUpdateFrequency(30.f);
 	SetMinNetUpdateFrequency(20.f);
 	
@@ -76,6 +84,23 @@ void ABaseCharacter::BeginPlay()
 		}
 		
 		HealthComponent->OnDeath.AddDynamic(this, &ABaseCharacter::HandleDeathCosmetic);
+		
+		HealthComponent->OnHealthChanged.AddDynamic(this, &ABaseCharacter::HandleHealthChanged);
+		HandleHealthChanged(nullptr
+			, HealthComponent->GetHealth()
+			, 0.f
+			, nullptr
+			, nullptr);
+	}
+}
+
+void ABaseCharacter::NotifyControllerChanged()
+{
+	Super::NotifyControllerChanged();
+	
+	if (HealthBarWidget)
+	{
+		HealthBarWidget->SetVisibility(!IsLocallyControlled());
 	}
 }
 
@@ -196,7 +221,34 @@ void ABaseCharacter::HandleDeathCosmetic(UHealthComponent* InHealthComponent, AC
 		MeshComp->SetSimulatePhysics(true);
 		MeshComp->WakeAllRigidBodies();
 	}
+	
+	if (HealthBarWidget)
+	{
+		HealthBarWidget->SetVisibility(false);
+	}
 }
+
+void ABaseCharacter::HandleHealthChanged(UHealthComponent* InHealthComponent
+	, float NewHealth
+	, float Delta
+	, AController* InstigatedBy
+	, AActor* DamageCauser)
+{
+	if (!HealthBarWidget)
+	{
+		return;
+	}
+	
+	UHealthBarWidget* HealthBar = Cast<UHealthBarWidget>(HealthBarWidget->GetUserWidgetObject());
+	if (!IsValid(HealthBar))
+	{
+		return;
+	}
+	
+	const float MaxP = FMath::Max(HealthComponent->GetMaxHealth(), 1.f);
+	HealthBar->UpdateHealthPercent(FMath::Clamp(NewHealth / MaxP, 0.f, 1.f));
+}
+
 
 void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
