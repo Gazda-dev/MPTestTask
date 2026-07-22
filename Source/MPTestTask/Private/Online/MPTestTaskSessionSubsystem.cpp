@@ -9,6 +9,7 @@
 #include "Engine/GameInstance.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/PlayerState.h"
+#include "Misc/CommandLine.h"
 #include "Settings/MPTestTaskDevSettings.h"
 
 DEFINE_LOG_CATEGORY(LogSession);
@@ -71,16 +72,25 @@ void UMPTestTaskSessionSubsystem::HostSession(int32 NumPublicConnections
 	
 	PendingMapPath = MapPath;
 	
+	const bool bEOS = IsUsingEOS();
+	
 	LastSessionSettings = MakeShareable(new FOnlineSessionSettings());
-	LastSessionSettings->bIsLANMatch = true;
+	LastSessionSettings->bIsLANMatch = !bEOS;
 	LastSessionSettings->NumPublicConnections = NumPublicConnections;
 	LastSessionSettings->bShouldAdvertise = true;
 	LastSessionSettings->bAllowJoinInProgress = true;
-	LastSessionSettings->bUsesPresence = false;
-	LastSessionSettings->bAllowJoinViaPresence = false;
-	LastSessionSettings->bUseLobbiesIfAvailable = false;
+	LastSessionSettings->bUsesPresence = bEOS;
+	LastSessionSettings->bAllowJoinViaPresence = bEOS;
+	LastSessionSettings->bUseLobbiesIfAvailable = bEOS;
 	
 	LastSessionSettings->Set(FName("SERVER_NAME"), ServerName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
+	
+	if (bEOS)
+	{
+		LastSessionSettings->Set(FName("GAME_ID")
+			, FString(TEXT("MPTestTask"))
+			, EOnlineDataAdvertisementType::ViaOnlineService);
+	}
 	
 	OnCreateSessionCompleteDelegateHandle = Sessions->AddOnCreateSessionCompleteDelegate_Handle(
 		FOnCreateSessionCompleteDelegate::CreateUObject(this, &UMPTestTaskSessionSubsystem::HandleCreateSessionComplete));
@@ -97,11 +107,20 @@ void UMPTestTaskSessionSubsystem::FindSessions()
 		return;
 	}
 	
-	UE_LOG(LogSession, Display, TEXT("Searching for LAN sessions..."));
+	UE_LOG(LogSession, Display, TEXT("Searching for sessions..."));
+	
+	const bool bEOS = IsUsingEOS();
 	
 	LastSearch = MakeShareable(new FOnlineSessionSearch());
-	LastSearch->bIsLanQuery = true;
+	LastSearch->bIsLanQuery = !bEOS;
 	LastSearch->MaxSearchResults = 20;
+	
+	if (bEOS)
+	{
+		LastSearch->QuerySettings.Set(FName("GAME_ID")
+			, FString(TEXT("MPTestTask"))
+			, EOnlineComparisonOp::Equals);
+	}
 	
 	OnFindSessionCompleteDelegateHandle = Sessions->AddOnFindSessionsCompleteDelegate_Handle(
 		FOnFindSessionsCompleteDelegate::CreateUObject(this, &UMPTestTaskSessionSubsystem::HandleFindSessionsComplete));
@@ -204,6 +223,69 @@ void UMPTestTaskSessionSubsystem::LeaveSession()
 	}
 }
 
+void UMPTestTaskSessionSubsystem::Login()
+{
+	if (!IsUsingEOS())
+	{
+		OnMPLoginComplete.Broadcast(true);
+		return;
+	}
+	
+	IOnlineSubsystem* OnlineSubsystem = GetActiveOSS();
+	if (!OnlineSubsystem)
+	{
+		return;
+	}
+	
+	IOnlineIdentityPtr Identity = OnlineSubsystem->GetIdentityInterface();
+	if (!Identity.IsValid())
+	{
+		return;
+	}
+	
+	if (Identity->GetLoginStatus(0) == ELoginStatus::LoggedIn)
+	{
+		UE_LOG(LogSession, Display, TEXT("User already logged in"));
+		OnMPLoginComplete.Broadcast(true);
+		return;
+	}
+	
+	OnLoginCompleteDelegateHandle = Identity->AddOnLoginCompleteDelegate_Handle(
+		0, FOnLoginCompleteDelegate::CreateUObject(this, &UMPTestTaskSessionSubsystem::HandleLoginComplete));
+	
+	const UMPTestTaskDevSettings* DevSettings = GetDefault<UMPTestTaskDevSettings>();
+	if (!IsValid(DevSettings))
+	{
+		return;
+	}
+	
+	// its for dev testing only - for ready game credentials should be changed properly
+	FOnlineAccountCredentials Credentials;
+	Credentials.Type = TEXT("Developer");
+	Credentials.Id = TEXT("localhost:6300");
+	Credentials.Token = DevSettings->DevAuthCredentialName;
+	
+	Identity->Login(0, Credentials);
+}
+
+bool UMPTestTaskSessionSubsystem::IsLoggedIn() const
+{
+	if (!IsUsingEOS())
+	{
+		return true;
+	}
+	
+	IOnlineSubsystem* OnlineSubsystem = GetActiveOSS();
+	if (!OnlineSubsystem)
+	{
+		return false;
+	}
+	
+	IOnlineIdentityPtr Identity = OnlineSubsystem->GetIdentityInterface();
+	
+	return Identity.IsValid() && Identity->GetLoginStatus(0) == ELoginStatus::LoggedIn;
+}
+
 IOnlineSessionPtr UMPTestTaskSessionSubsystem::GetSessions() const
 {
 	const UWorld* World = GetWorld();
@@ -212,7 +294,7 @@ IOnlineSessionPtr UMPTestTaskSessionSubsystem::GetSessions() const
 		return nullptr;
 	}
 	
-	const IOnlineSubsystem* OnlineSubsystem = Online::GetSubsystem(World);
+	const IOnlineSubsystem* OnlineSubsystem = GetActiveOSS();
 	if (!OnlineSubsystem)
 	{
 		UE_LOG(LogSession, Error, TEXT("OSS is not valid!"));
@@ -400,4 +482,41 @@ void UMPTestTaskSessionSubsystem::HandleJoinTimeout()
 	
 	OnMPJoinSessionComplete.Broadcast(false);
 	FindSessions();
+}
+
+void UMPTestTaskSessionSubsystem::HandleLoginComplete(int32 LocalUserNum
+	, bool bWasSuccessful
+	, const FUniqueNetId& UserId
+	, const FString& Error)
+{
+	
+	if (IOnlineSubsystem* OnlineSubsystem = GetActiveOSS())
+	{
+		IOnlineIdentityPtr Identity = OnlineSubsystem->GetIdentityInterface();
+		if (Identity.IsValid())
+		{
+			Identity->ClearOnLoginCompleteDelegate_Handle(0, OnLoginCompleteDelegateHandle);
+		}
+	}
+	
+	UE_CLOG(!bWasSuccessful, LogSession, Display, TEXT("EOS login failed %s"), *Error);
+	UE_CLOG(bWasSuccessful, LogSession, Display, TEXT("EOS login successful %s"), *UserId.ToString());
+	
+	OnMPLoginComplete.Broadcast(bWasSuccessful);
+}
+
+IOnlineSubsystem* UMPTestTaskSessionSubsystem::GetActiveOSS() const
+{
+	return Online::GetSubsystem(GetWorld(), IsUsingEOS() ? EOS_SUBSYSTEM : NULL_SUBSYSTEM);
+}
+
+bool UMPTestTaskSessionSubsystem::IsUsingEOS() const
+{
+	const UMPTestTaskDevSettings* DevSettings = GetDefault<UMPTestTaskDevSettings>();
+	if (!IsValid(DevSettings))
+	{
+		return false;
+	}
+	
+	return DevSettings->bUseEOS;
 }

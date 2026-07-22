@@ -13,9 +13,8 @@ class UNiagaraSystem;
 class UDamageType;
 struct FVector_NetQuantize;
 
-//TODO default false
 static TAutoConsoleVariable<bool> CVarDrawDebugWeapon(TEXT("MPTT.debug.weapon")
-	, true
+	, false
 	, TEXT("draw weapon's debug info"));
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))

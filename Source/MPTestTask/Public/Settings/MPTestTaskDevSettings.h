@@ -25,4 +25,10 @@ public:
 	// after how many seconds joining to server will be aborted
 	UPROPERTY(Config, EditAnywhere, Category = "Online")
 	float JoinTimeoutSeconds = 10.f;
+	
+	UPROPERTY(Config, EditAnywhere, Category = "Online")
+	bool bUseEOS = false;
+	
+	UPROPERTY(Config, EditAnywhere, Category = "Online|EOS")
+	FString DevAuthCredentialName = TEXT("Player1");
 };

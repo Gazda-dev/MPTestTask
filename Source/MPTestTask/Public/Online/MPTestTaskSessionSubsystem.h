@@ -9,6 +9,8 @@
 
 #include "MPTestTaskSessionSubsystem.generated.h"
 
+class IOnlineSubsystem;
+
 namespace ETravelFailure
 {
 	enum Type : int;
@@ -46,6 +48,7 @@ struct FSessionInfo
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMPOnCreateSessionComplete, bool, bWasSuccessful);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FMPOnFindSessionComplete, bool, bWasSuccessful, const TArray<FSessionInfo>&, Results);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMPOnJoinSessionComplete, bool, bWasSuccessful);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMPOnLoginComplete, bool , bWasSuccessful);
 
 UCLASS()
 class MPTESTTASK_API UMPTestTaskSessionSubsystem : public UGameInstanceSubsystem
@@ -71,6 +74,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Session")
 	void LeaveSession();
 	
+	UFUNCTION(BlueprintCallable, Category = "Session")
+	void Login();
+	
+	UFUNCTION(BlueprintCallable, Category = "Session")
+	bool IsUsingEOS() const;
+
+	UFUNCTION(BlueprintCallable)
+	bool IsLoggedIn() const;
+	
 protected:
 	IOnlineSessionPtr GetSessions() const;
 	
@@ -89,6 +101,13 @@ protected:
 	
 	void HandleJoinTimeout();
 	
+	void HandleLoginComplete(int32 LocalUserNum
+		, bool bWasSuccessful
+		, const FUniqueNetId& UserId
+		, const FString& Error);
+	
+	IOnlineSubsystem* GetActiveOSS() const;
+	
 public:
 	UPROPERTY(BlueprintAssignable, Category = "Session")
 	FMPOnCreateSessionComplete OnMPCreateSessionComplete;
@@ -98,6 +117,9 @@ public:
 	
 	UPROPERTY(BlueprintAssignable, Category = "Session")
 	FMPOnJoinSessionComplete OnMPJoinSessionComplete;
+
+	UPROPERTY(BlueprintAssignable, Category = "Session")
+	FMPOnLoginComplete OnMPLoginComplete;
 	
 protected:
 	TSharedPtr<FOnlineSessionSettings> LastSessionSettings;
@@ -108,6 +130,7 @@ protected:
 	FDelegateHandle OnCreateSessionCompleteDelegateHandle;
 	FDelegateHandle OnFindSessionCompleteDelegateHandle;
 	FDelegateHandle OnJoinSessionCompleteDelegateHandle;
+	FDelegateHandle OnLoginCompleteDelegateHandle;
 	
 	bool bIsJoining = false;
 	
