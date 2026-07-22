@@ -142,3 +142,6 @@ je poza takimi, które samemu czułem że potrzebują wyjaśnienia - reszta myś
 <br>
 
 **Wszystkie założenia zadania zostały zrealizowane. Projekt został na nowo sklonowany z github i przetestowany.**
+
+<br>
+ 
